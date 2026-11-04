@@ -24,7 +24,13 @@ if(channel){ sb.removeChannel(channel); channel = null; }
 COLS.forEach(c => S.data[c] = new Map()); S.seen.clear(); S.mode = "loading";
 setTimeout(() => { const e = $("#lg-email"); if(e) e.focus(); }, 50);
 }
-function startApp(session){
+async function startApp(session){
+const {data:ok, error} = await sb.rpc("is_equipe");
+if(error || ok !== true){
+await sb.auth.signOut(); showLogin();
+$("#lg-err").textContent = error ? "Não foi possível verificar seu acesso. Tente de novo." : "Este e-mail não tem acesso ao gerenciador.";
+return;
+}
 document.body.classList.remove("locked"); $("#login").hidden = true;
 $("#logoutBtn").title = "Sair (" + (session.user.email||"") + ")";
 render(); connect();
