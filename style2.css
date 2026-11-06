@@ -137,3 +137,10 @@ nav.tabs{width:100%}
 nav.tabs button{flex:1;justify-content:center;padding:7px 4px;font-size:15px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+.split-list{display:flex;flex-direction:column;gap:10px}
+.split-row{display:flex;flex-direction:column;gap:6px;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
+.split-top{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.split-formas{flex:1 1 200px}
+.split-formas .chip{flex:1}
+.split-val{width:110px!important;flex:0 0 110px;font-family:var(--f-mono);text-align:right}

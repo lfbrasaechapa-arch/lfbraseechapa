@@ -24,13 +24,23 @@ h = `<h2>Fechar comanda</h2><p class="muted" style="margin:0">${esc(c.nome)} · 
 <div class="stamp" style="display:flex;flex-direction:column;gap:4px">
 ${c.itens.map(i=>`<div class="sumline"><span>${i.qtd}× ${esc(i.nome)}</span><span>${brl(i.qtd*i.preco)}</span></div>`).join("")}
 </div>
-<div class="field"><span>Forma de pagamento</span>
-<div class="pay-opts">${Object.keys(FORMAS).map(k=>`<button type="button" class="pay-opt" style="--sel:${FORMA_COLOR[k]}" data-act="pay-forma" data-v="${k}" aria-pressed="${p.forma===k}">${ICONS[k]}${FORMAS[k]}</button>`).join("")}</div>
+${!p.split ? `<div class="field"><span>Forma de pagamento</span>
+<div class="pay-opts">${Object.keys(FORMAS).map(k=>`<button type="button" class="pay-opt" style="--sel:${FORMA_COLOR[k]}" data-act="pay-forma" data-v="0:${k}" aria-pressed="${p.partes[0].forma===k}">${ICONS[k]}${FORMAS[k]}</button>`).join("")}</div>
 </div>
-${p.forma==="cartao" ? `<div class="seg"><button type="button" class="chip" data-act="pay-tipo" data-v="debito" aria-pressed="${p.tipo==="debito"}">Débito</button><button type="button" class="chip" data-act="pay-tipo" data-v="credito" aria-pressed="${p.tipo==="credito"}">Crédito</button></div>` : ""}
+${p.partes[0].forma==="cartao" ? tipoChips(0, p.partes[0]) : ""}
+<button type="button" class="btn btn-ghost" style="align-self:flex-start" data-act="pay-split">Dividir pagamento (ex.: parte em dinheiro, parte no cartão)</button>` :
+`<div class="field"><span>Pagamento dividido</span>
+<div class="split-list">${p.partes.map((pt,i)=>`<div class="split-row">
+<div class="split-top"><div class="seg split-formas">${Object.keys(FORMAS).map(k=>`<button type="button" class="chip" data-act="pay-forma" data-v="${i}:${k}" aria-pressed="${pt.forma===k}">${FORMAS[k]}</button>`).join("")}</div>
+<input type="text" id="c-parte-${i}" class="split-val" inputmode="decimal" placeholder="0,00" value="${esc(pt.valor)}" aria-label="Valor pago em ${FORMAS[pt.forma]}">
+${p.partes.length>2?`<button type="button" class="icon-btn" data-act="pay-rm" data-v="${i}" aria-label="Remover esta forma">×</button>`:""}</div>
+${pt.forma==="cartao" ? tipoChips(i, pt) : ""}
+</div>`).join("")}</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn btn-ghost" data-act="pay-add">+ Adicionar forma</button><button type="button" class="btn btn-ghost" data-act="pay-unsplit">Pagar com uma forma só</button></div>
+</div>`}
 <div class="two">
 <label class="field"><span>Desconto (R$)</span><input type="text" id="c-desc" inputmode="decimal" placeholder="0,00" value="${esc(p.desconto)}"></label>
-${p.forma==="dinheiro" ? `<label class="field"><span>Valor recebido (R$)</span><input type="text" id="c-rec" inputmode="decimal" placeholder="0,00" value="${esc(p.recebido)}"></label>` : "<div></div>"}
+${p.partes.some(pt=>pt.forma==="dinheiro") ? `<label class="field"><span>Dinheiro recebido (R$)</span><input type="text" id="c-rec" inputmode="decimal" placeholder="para calcular o troco" value="${esc(p.recebido)}"></label>` : "<div></div>"}
 </div>
 <div id="c-calc"></div>
 <div class="foot"><button type="button" class="btn btn-ghost" data-act="modal-close">Voltar</button><button type="submit" class="btn btn-primary btn-lg" id="c-ok">Confirmar pagamento</button></div>
@@ -84,7 +94,7 @@ ${c.status==="fechada" ? `${c.desconto?`<div class="sumline"><span>Desconto</spa
 <div class="sumline tot"><span>Total</span><span>${brl(c.total)}</span></div>
 ${(c.pagamentos||[]).map(p=>`<div class="sumline"><span>${FORMAS[p.forma]}${p.forma==="cartao"?" ("+(p.tipo==="credito"?"crédito":"débito")+")":""}</span><span>${brl(p.valor)}</span></div>`).join("")}
 ${taxaComanda(c)?`<div class="sumline muted"><span>Taxa da maquininha</span><span>− ${brl(taxaComanda(c))}</span></div><div class="sumline"><span>Líquido recebido</span><span>${brl(c.total-taxaComanda(c))}</span></div>`:""}
-${c.recebido?`<div class="sumline muted"><span>Recebido / troco</span><span>${brl(c.recebido)} / ${brl(c.troco||0)}</span></div>`:""}` : ""}
+${c.recebido?`<div class="sumline muted"><span>Dinheiro recebido / troco</span><span>${brl(c.recebido)} / ${brl(c.troco||0)}</span></div>`:""}` : ""}
 </div>
 <div class="foot" style="margin-top:18px">${c.status==="fechada"?`<button class="btn btn-ghost" data-act="reopen" data-v="${m.id}">Reabrir comanda</button>`:""}<button class="btn btn-dark" data-act="modal-close">Fechar</button></div>`;
 }

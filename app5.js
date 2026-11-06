@@ -1,24 +1,40 @@
+function novoPagamento(){ return {split:false, desconto:"", recebido:"", partes:[{forma:"pix", tipo:"debito", valor:""}]}; }
+function tipoChips(i, pt){ return `<div class="seg"><button type="button" class="chip" data-act="pay-tipo" data-v="${i}:debito" aria-pressed="${pt.tipo!=="credito"}">Débito</button><button type="button" class="chip" data-act="pay-tipo" data-v="${i}:credito" aria-pressed="${pt.tipo==="credito"}">Crédito</button></div>`; }
+/* valores de cada parte: numa forma só, a parte recebe o total */
 function payNumbers(){
 const c = S.data.comandas.get(ui.sel); const p = ui.pay;
 const sub = subtotal(c);
 let desc = parseMoney(p.desconto); if(!isFinite(desc) || desc<0) desc = 0; desc = Math.min(desc, sub);
 const total = round2(sub - desc);
+const partes = p.partes.map(pt => { let v = p.split ? parseMoney(pt.valor) : total; if(!isFinite(v) || v < 0) v = 0; return {...pt, v: round2(v)}; });
+const soma = round2(partes.reduce((s,pt)=>s+pt.v,0));
+const dinheiro = round2(partes.filter(pt=>pt.forma==="dinheiro").reduce((s,pt)=>s+pt.v,0));
 const rec = parseMoney(p.recebido);
-return {sub, desc, total, rec};
+return {sub, desc, total, partes, soma, falta: round2(total - soma), dinheiro, rec};
 }
 function updatePayCalc(){
 const box = $("#c-calc"); if(!box) return;
-const {sub, desc, total, rec} = payNumbers();
-let extra = "", ok = true;
-if(ui.pay.forma === "dinheiro" && isFinite(rec)){
-if(rec < total){ extra = `<div class="change bad">Faltam ${brl(total-rec)}</div>`; ok = false; }
-else extra = `<div class="change ok">Troco: ${brl(rec-total)}</div>`;
+const n = payNumbers(); const p = ui.pay;
+let lines = "", ok = true;
+if(p.split){
+if(n.partes.some(pt => pt.v <= 0)){ lines += `<div class="change bad">Preencha o valor de cada forma de pagamento.</div>`; ok = false; }
+else if(Math.abs(n.falta) > 0.004){ lines += `<div class="change bad">${n.falta > 0 ? "Faltam "+brl(n.falta) : "Passou "+brl(-n.falta)+" do total"}</div>`; ok = false; }
+else lines += `<div class="change ok">Valores conferem com o total</div>`;
 }
+if(n.dinheiro > 0 && isFinite(n.rec)){
+if(n.rec < n.dinheiro){ lines += `<div class="change bad">Dinheiro recebido é menor que a parte em dinheiro (${brl(n.dinheiro)})</div>`; ok = false; }
+else lines += `<div class="change ok">Troco: ${brl(n.rec - n.dinheiro)}</div>`;
+}
+const card = n.partes.filter(pt => pt.forma==="cartao" && pt.v > 0);
+let taxaTot = 0;
+const cardLines = card.map(pt => { const tp = taxas()[pt.tipo==="credito"?"credito":"debito"], tx = round2(pt.v*tp/100); taxaTot += tx;
+return `<div class="sumline muted"><span>Taxa ${pt.tipo==="credito"?"crédito":"débito"} (${pct(tp)}) sobre ${brl(pt.v)}</span><span>− ${brl(tx)}</span></div>`; }).join("");
 box.innerHTML = `<div style="display:flex;flex-direction:column;gap:6px">
-${desc?`<div class="sumline"><span>Subtotal</span><span>${brl(sub)}</span></div><div class="sumline"><span>Desconto</span><span>− ${brl(desc)}</span></div>`:""}
-<div class="sumline tot"><span>Total a pagar</span><span>${brl(total)}</span></div>${extra}
-${ui.pay.forma === "cartao" ? (() => { const tp = taxas()[ui.pay.tipo==="credito"?"credito":"debito"], tx = round2(total*tp/100);
-return `<div class="sumline muted"><span>Taxa da maquininha (${pct(tp)}) <button type="button" class="btn btn-ghost" style="padding:0 6px;font-size:12px" data-act="taxas">alterar</button></span><span>− ${brl(tx)}</span></div><div class="sumline"><span>Você recebe</span><span>${brl(total-tx)}</span></div>`; })() : ""}</div>`;
+${n.desc?`<div class="sumline"><span>Subtotal</span><span>${brl(n.sub)}</span></div><div class="sumline"><span>Desconto</span><span>− ${brl(n.desc)}</span></div>`:""}
+<div class="sumline tot"><span>Total a pagar</span><span>${brl(n.total)}</span></div>
+${p.split ? n.partes.map(pt=>`<div class="sumline"><span><span class="dot" style="background:${FORMA_COLOR[pt.forma]}"></span>${FORMAS[pt.forma]}${pt.forma==="cartao"?" ("+(pt.tipo==="credito"?"crédito":"débito")+")":""}</span><span>${brl(pt.v)}</span></div>`).join("") : ""}
+${lines}
+${card.length ? cardLines + `<div class="sumline"><span>Você recebe <button type="button" class="btn btn-ghost" style="padding:0 6px;font-size:12px" data-act="taxas">alterar taxas</button></span><span>${brl(n.total - taxaTot)}</span></div>` : ""}</div>`;
 const b = $("#c-ok"); if(b) b.disabled = !ok;
 }
 /* ---------- eventos ---------- */
@@ -36,9 +52,13 @@ case "add": addItem(ui.sel, v); break;
 case "inc": changeQty(ui.sel, v, 1); break;
 case "dec": changeQty(ui.sel, v, -1); break;
 case "cat": ui.cat = v; render(); break;
-case "close-cmd": if(guard()){ ui.pay = {forma:"pix", tipo:"debito", desconto:"", recebido:""}; openModal({type:"close"}); } break;
-case "pay-forma": ui.pay.forma = v; renderModal(); break;
-case "pay-tipo": ui.pay.tipo = v; renderModal(); break;
+case "close-cmd": if(guard()){ ui.pay = novoPagamento(); openModal({type:"close"}); } break;
+case "pay-forma": { const [i,f] = v.split(":"); const pt = ui.pay.partes[Number(i)]; if(pt){ pt.forma = f; renderModal(); } break; }
+case "pay-split": { const n = payNumbers(); const first = ui.pay.partes[0]; first.valor = ""; ui.pay.partes = [first, {forma: first.forma==="dinheiro" ? "cartao" : "dinheiro", tipo:"debito", valor:""}]; ui.pay.split = true; renderModal(); const el = $("#c-parte-0"); if(el) el.focus(); break; }
+case "pay-unsplit": ui.pay.split = false; ui.pay.partes = [ui.pay.partes[0]]; renderModal(); break;
+case "pay-add": { const n = payNumbers(); const usadas = ui.pay.partes.map(pt=>pt.forma); const f = ["pix","dinheiro","cartao"].find(x=>!usadas.includes(x)) || "pix"; ui.pay.partes.push({forma:f, tipo:"debito", valor: n.falta > 0 ? moneyIn(n.falta) : ""}); renderModal(); break; }
+case "pay-rm": if(ui.pay.partes.length > 2){ ui.pay.partes.splice(Number(v),1); renderModal(); } break;
+case "pay-tipo": { const [i,t] = v.split(":"); const pt = ui.pay.partes[Number(i)]; if(pt){ pt.tipo = t; renderModal(); } break; }
 case "cancel-cmd": if(guard()) openModal({type:"cancel"}); break;
 case "confirm-cancel": {
 const c = S.data.comandas.get(ui.sel);
@@ -103,6 +123,7 @@ else if(id === "listQ"){ ui.listQ = e.target.value; render(); }
 else if(id === "prodQ"){ ui.prodQ = e.target.value; render(); }
 else if(id === "c-desc"){ ui.pay.desconto = e.target.value; updatePayCalc(); }
 else if(id === "c-rec"){ ui.pay.recebido = e.target.value; updatePayCalc(); }
+else if(id.startsWith("c-parte-")){ const pt = ui.pay.partes[Number(id.slice(8))]; if(pt){ pt.valor = e.target.value; updatePayCalc(); } }
 else if(id === "b-forn"){ ui.compra.fornecedor = e.target.value; updateFornNote(); }
 else if(id === "fornQ"){ ui.fornQ = e.target.value; render(); }
 else if(id === "b-data"){ ui.compra.data = e.target.value; }
@@ -144,14 +165,23 @@ closeModal(); render();
 }
 else if(f.id === "f-close"){
 const c = S.data.comandas.get(ui.sel); if(!c) return;
-const {sub, desc, total, rec} = payNumbers(); const p = ui.pay;
-const pag = {forma:p.forma, valor:total};
-if(p.forma==="cartao"){ pag.tipo = p.tipo; pag.taxaPct = taxas()[p.tipo==="credito"?"credito":"debito"]; pag.taxa = round2(total*pag.taxaPct/100); }
-Object.assign(c, {status:"fechada", fechamentoTs:Date.now(), subtotal:sub, desconto:desc, total, pagamentos:[pag]});
-if(p.forma==="dinheiro" && isFinite(rec)){ c.recebido = rec; c.troco = round2(rec-total); }
+const n = payNumbers();
+if(ui.pay.split && (Math.abs(n.falta) > 0.004 || n.partes.some(pt => pt.v <= 0))){ toast("A soma das formas de pagamento precisa dar "+brl(n.total)+"."); return; }
+/* junta partes iguais (mesma forma e mesmo tipo de cartão) */
+const pagamentos = [];
+n.partes.forEach(pt => {
+const tipo = pt.forma==="cartao" ? (pt.tipo==="credito"?"credito":"debito") : null;
+let g = pagamentos.find(x => x.forma===pt.forma && (x.tipo||null)===tipo);
+if(!g){ g = {forma:pt.forma, valor:0}; if(tipo) g.tipo = tipo; pagamentos.push(g); }
+g.valor = round2(g.valor + pt.v);
+});
+pagamentos.forEach(g => { if(g.forma==="cartao"){ g.taxaPct = taxas()[g.tipo]; g.taxa = round2(g.valor*g.taxaPct/100); } });
+Object.assign(c, {status:"fechada", fechamentoTs:Date.now(), subtotal:n.sub, desconto:n.desc, total:n.total, pagamentos});
+delete c.recebido; delete c.troco;
+if(n.dinheiro > 0 && isFinite(n.rec) && n.rec >= n.dinheiro){ c.recebido = n.rec; c.troco = round2(n.rec - n.dinheiro); }
 persist("comandas", ui.sel);
-const extra = (p.forma==="dinheiro" && isFinite(rec) && rec>total) ? " Troco: "+brl(rec-total)+"." : "";
-toast("“"+c.nome+"” fechada: "+brl(total)+" no "+FORMAS[p.forma]+"."+extra);
+const desc = pagamentos.map(g => brl(g.valor)+" no "+FORMAS[g.forma]).join(" + ");
+toast("“"+c.nome+"” fechada: "+desc+"."+(c.troco ? " Troco: "+brl(c.troco)+"." : ""));
 ui.sel = null; closeModal(); render();
 }
 else if(f.id === "f-prod"){
