@@ -214,7 +214,7 @@ function render(rows){
 
   var promos = {};
   rows.forEach(function(r){ if(r.promocao && !r.esgotado){ (promos[r.promocao] = promos[r.promocao] || []).push(limpa(r.nome)); } });
-  var promoHtml = Object.keys(promos).map(function(p){ return '<div class="promo-bar">🔥 Promoção: <b>' + esc(p) + '</b> em ' + esc(promos[p].join(", ")) + ' (pode misturar)</div>'; }).join("");
+  var promoHtml = Object.keys(promos).map(function(p){ return '<div class="promo-bar">🔥 Promoção: <b>' + esc(p) + '</b> em ' + esc(promos[p].join(", ")) + '</div>'; }).join("");
 
   function secHtml(s){
     return '<div class="sec" id="s-' + s.id + '"><div class="sec-head"><img class="foto" src="img/' + s.foto + '.webp" alt=""><div class="ribbon"><span class="ico">' + ICON[s.icon] + '</span><h3>' + esc(s.titulo) + '</h3></div></div><div class="itens">' +
