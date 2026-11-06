@@ -166,6 +166,7 @@ const aPagar = round2(pend.reduce((s,p)=>s+p.valor,0));
 const ticket = fech.length ? fat/fech.length : 0;
 const abertasNow = abertas(); const emAberto = round2(abertasNow.reduce((s,c)=>s+subtotal(c),0));
 const porForma = {pix:0,dinheiro:0,cartao:0}, cart = {debito:0,credito:0};
+const valorForma = (c, f) => round2((c.pagamentos||[]).filter(p=>p.forma===f).reduce((s,p)=>s+p.valor,0));
 fech.forEach(c => (c.pagamentos||[]).forEach(p => { porForma[p.forma] = (porForma[p.forma]||0) + p.valor; if(p.forma==="cartao") cart[p.tipo||"debito"] += p.valor; }));
 const bars = Object.keys(FORMAS).map(k => {
 const v = round2(porForma[k]||0), pct = fat ? v/fat*100 : 0;
@@ -200,10 +201,16 @@ const tops = new Map();
 fech.forEach(c => (c.itens||[]).forEach(i => { const t = tops.get(i.nome)||{q:0,v:0}; t.q+=i.qtd; t.v+=i.qtd*i.preco; tops.set(i.nome,t); }));
 const topList = [...tops.entries()].sort((x,y)=>y[1].q-x[1].q).slice(0,8);
 const rank = topList.length ? `<div class="rank">${topList.map(([n,t],i)=>`<div class="rank-row"><span class="r">${i+1}</span><span>${esc(n)}</span><span class="q">${t.q}×</span><span class="val">${brl(t.v)}</span></div>`).join("")}</div>` : `<div class="empty">Nada vendido neste período.</div>`;
-const hist = fin.length ? `<div class="table-wrap"><table><thead><tr><th>Comanda</th><th>Abertura</th><th>Fechamento</th><th>Tempo</th><th>Pagamento</th><th style="text-align:right">Total</th></tr></thead><tbody>
-${fin.map(c => `<tr class="clickable" data-act="hist" data-v="${c.id}"><td><b>${esc(c.nome)}</b></td><td class="n">${fmtDate(c.aberturaTs)} ${fmtTime(c.aberturaTs)}</td><td class="n">${fmtDate(c.fechamentoTs)} ${fmtTime(c.fechamentoTs)}</td><td class="n">${dur(c.fechamentoTs-c.aberturaTs)}</td>
-<td>${c.status==="cancelada" ? '<span class="pill cancelada">Cancelada</span>' : (c.pagamentos||[]).map(p=>`<span class="pill ${p.forma}">${FORMAS[p.forma]}${p.forma==="cartao"?" "+(p.tipo==="credito"?"crédito":"débito"):""}</span>`).join(" ")}</td>
-<td class="n" style="text-align:right">${c.status==="cancelada" ? '<span class="muted">—</span>' : brl(c.total)}</td></tr>`).join("")}
+const cel = v => v ? brl(v) : '<span class="muted">—</span>';
+const hist = fin.length ? `<div class="table-wrap"><table><thead><tr><th>Comanda</th><th>Abertura</th><th>Fechamento</th><th>Tempo</th><th style="text-align:right"><span class="dot" style="background:${FORMA_COLOR.dinheiro}"></span>Dinheiro</th><th style="text-align:right"><span class="dot" style="background:${FORMA_COLOR.pix}"></span>Pix</th><th style="text-align:right"><span class="dot" style="background:${FORMA_COLOR.cartao}"></span>Cartão</th><th style="text-align:right">Total</th></tr></thead><tbody>
+${fin.map(c => { const canc = c.status==="cancelada";
+const cartTipos = (c.pagamentos||[]).filter(p=>p.forma==="cartao").map(p=>p.tipo==="credito"?"crédito":"débito");
+return `<tr class="clickable" data-act="hist" data-v="${c.id}"><td><b>${esc(c.nome)}</b>${canc?' <span class="pill cancelada">Cancelada</span>':""}</td><td class="n">${fmtDate(c.aberturaTs)} ${fmtTime(c.aberturaTs)}</td><td class="n">${fmtDate(c.fechamentoTs)} ${fmtTime(c.fechamentoTs)}</td><td class="n">${dur(c.fechamentoTs-c.aberturaTs)}</td>
+<td class="n" style="text-align:right">${canc?'<span class="muted">—</span>':cel(valorForma(c,"dinheiro"))}</td>
+<td class="n" style="text-align:right">${canc?'<span class="muted">—</span>':cel(valorForma(c,"pix"))}</td>
+<td class="n" style="text-align:right">${canc?'<span class="muted">—</span>':cel(valorForma(c,"cartao"))+(cartTipos.length?`<div class="muted" style="font-size:11.5px">${cartTipos.join(" + ")}</div>`:"")}</td>
+<td class="n" style="text-align:right;font-weight:600">${canc ? '<span class="muted">—</span>' : brl(c.total)}</td></tr>`; }).join("")}
+<tr class="tot-row"><td colspan="4"><b>Total do período</b> <span class="muted">· ${fech.length} ${fech.length===1?"comanda":"comandas"}</span></td><td class="n" style="text-align:right">${brl(porForma.dinheiro)}</td><td class="n" style="text-align:right">${brl(porForma.pix)}</td><td class="n" style="text-align:right">${brl(porForma.cartao)}</td><td class="n" style="text-align:right">${brl(fat)}</td></tr>
 </tbody></table></div>` : `<div class="empty">Nenhuma comanda fechada neste período.</div>`;
 const despHtml = `<form id="f-desp" class="desp-form" autocomplete="off">
 <label class="field f-desc"><span>Descrição</span><input type="text" id="d-desc" name="desc" placeholder="Ex.: carvão, gelo, carne" required></label>
@@ -219,6 +226,9 @@ return `<div class="panel-head"><h2>Financeiro · ${label}</h2>
 <div class="periods">${P.map(([k,l])=>`<button class="chip" data-act="period" data-v="${k}" aria-pressed="${ui.period===k}">${l}</button>`).join("")}</div></div>
 <div class="kpis">
 <div class="kpi hero"><div class="label">Faturamento</div><div class="v">${brl(fat)}</div>${taxaCartao?`<div style="font-size:12.5px;opacity:.85">líquido ${brl(liquido)}</div>`:""}</div>
+<div class="kpi forma-kpi" style="--fc:${FORMA_COLOR.dinheiro}"><div class="label"><span class="dot" style="background:var(--fc)"></span>Dinheiro</div><div class="v">${brl(porForma.dinheiro)}</div><div class="muted" style="font-size:12.5px">${fat?Math.round(porForma.dinheiro/fat*100):0}% do faturamento</div></div>
+<div class="kpi forma-kpi" style="--fc:${FORMA_COLOR.pix}"><div class="label"><span class="dot" style="background:var(--fc)"></span>Pix</div><div class="v">${brl(porForma.pix)}</div><div class="muted" style="font-size:12.5px">${fat?Math.round(porForma.pix/fat*100):0}% do faturamento</div></div>
+<div class="kpi forma-kpi" style="--fc:${FORMA_COLOR.cartao}"><div class="label"><span class="dot" style="background:var(--fc)"></span>Cartão</div><div class="v">${brl(porForma.cartao)}</div><div class="muted" style="font-size:12.5px">débito ${brl(cart.debito)} · crédito ${brl(cart.credito)}</div></div>
 <div class="kpi"><div class="label">Taxas do cartão</div><div class="v">${brl(taxaCartao)}</div><div class="muted" style="font-size:12.5px;display:flex;gap:6px;align-items:center;flex-wrap:wrap">débito ${pct(taxas().debito)} · crédito ${pct(taxas().credito)}<button class="btn btn-ghost" style="padding:1px 8px;font-size:12.5px" data-act="taxas">Alterar</button></div></div>
 <div class="kpi"><div class="label">Saídas</div><div class="v">${brl(saidas)}</div><div class="muted" style="font-size:12.5px">compras ${brl(saidasCompras)} · outras ${brl(saidasOutras)}</div></div>
 <div class="kpi"><div class="label">Saldo</div><div class="v" style="color:${liquido-saidas<0?"var(--bad)":"var(--ok)"}">${brl(liquido-saidas)}</div><div class="muted" style="font-size:12.5px">líquido − saídas</div></div>

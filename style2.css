@@ -144,3 +144,6 @@ nav.tabs button{flex:1;justify-content:center;padding:7px 4px;font-size:15px}
 .split-formas{flex:1 1 200px}
 .split-formas .chip{flex:1}
 .split-val{width:110px!important;flex:0 0 110px;font-family:var(--f-mono);text-align:right}
+
+.forma-kpi{border-top:3px solid var(--fc)}
+tr.tot-row td{border-top:1.5px solid var(--line);border-bottom:0;font-weight:600;background:var(--bg)}
