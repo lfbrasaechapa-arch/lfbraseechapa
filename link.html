@@ -38,7 +38,7 @@ a{color:inherit}
 
 /* ---------- tela de links ---------- */
 header.hero{padding-block:28px 8px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px}
-.hero img{width:220px;max-width:70%;height:auto;border-radius:14px;box-shadow:0 10px 40px rgba(242,134,30,.18)}
+.hero img{width:270px;max-width:78%;height:auto;filter:drop-shadow(0 6px 24px rgba(242,110,20,.25))}
 .hero h1{margin:4px 0 0;font-family:var(--f-brand);font-size:26px;letter-spacing:.07em;text-transform:uppercase;line-height:1.1;
   background:linear-gradient(180deg,#FFE08A 0%,#E9B44C 45%,#F2861E 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
 .hero p{margin:0;color:var(--muted);font-size:15px;letter-spacing:.04em}
@@ -58,6 +58,7 @@ header.hero{padding-block:28px 8px;text-align:center;display:flex;flex-direction
 .h-row{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-top:1px dotted var(--line);font-size:15px}
 .h-row b{font-variant-numeric:tabular-nums;white-space:nowrap}
 .h-row.fechado{color:var(--muted)}
+.h-row span i{display:inline-block;width:1.6em;font-style:normal}
 footer{color:var(--muted);font-size:13px;text-align:center;padding-block:14px 32px}
 
 /* ---------- tela do cardápio ---------- */
@@ -121,7 +122,7 @@ footer{color:var(--muted);font-size:13px;text-align:center;padding-block:14px 32
 <div class="wrap">
   <div id="vLinks">
   <header class="hero">
-    <img src="logo.webp" alt="L&amp;F Brasa e Chapa" width="320" height="229">
+    <img src="img/logo-transparente.webp" alt="L&amp;F Brasa e Chapa" width="520" height="367">
     <h1>L&amp;F Brasa e Chapa</h1>
     <p>Espetos · Porções · Lanches · Bebidas</p>
   </header>
@@ -145,9 +146,9 @@ footer{color:var(--muted);font-size:13px;text-align:center;padding-block:14px 32
   </nav>
   <section class="horario" aria-labelledby="t-horario">
     <h2 id="t-horario"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Horário</h2>
-    <div class="h-row" data-dias="1,2,3,4,5,6"><span>Segunda a sábado</span><b>☕ 05:30 às 11:00</b></div>
-    <div class="h-row" data-dias="3,4,5"><span>Quarta a sexta</span><b>🍺 a partir das 17:00</b></div>
-    <div class="h-row fechado" data-dias="0"><span>Domingo</span><b>Fechado</b></div>
+    <div class="h-row" data-dias="1,2,3,4,5,6"><span><i aria-hidden="true">☕</i>Segunda a sábado</span><b>05:30 às 11:00</b></div>
+    <div class="h-row" data-dias="3,4,5"><span><i aria-hidden="true">🍺</i>Quarta a sexta</span><b>a partir das 17:00</b></div>
+    <div class="h-row fechado" data-dias="0"><span><i aria-hidden="true"></i>Domingo</span><b>Fechado</b></div>
   </section>
   </div>
 
@@ -157,7 +158,7 @@ footer{color:var(--muted);font-size:13px;text-align:center;padding-block:14px 32
     <div id="paineis"><div class="panel dark"><img class="logo-fogo" src="img/logo-fogo.webp" alt="L&amp;F Brasa e Chapa" width="480" height="420"><p class="state">Carregando o cardápio…</p></div></div>
   </section>
 
-  <footer>L&amp;F Brasa e Chapa · R. Padre Eustáquio, 670 - Dona Rosa, Divinópolis - MG, 35500-521<span id="fPreco"><br>Preços sujeitos a alteração</span></footer>
+  <footer id="fPreco">Preços sujeitos a alteração</footer>
 </div>
 
 <script>
