@@ -27,11 +27,23 @@ if(!sub) sub = await reg.pushManager.subscribe({userVisibleOnly:true, applicatio
 const j = sub.toJSON();
 const r = await sb.from("push_inscricoes").upsert({endpoint:j.endpoint, p256dh:j.keys.p256dh, auth:j.keys.auth, aparelho:navigator.userAgent.slice(0,200), email: window.__email || null});
 if(r.error) throw r.error;
-pushState.ativo = true;
+pushState.ativo = true; pushState.erro = "";
 reg.showNotification("✅ Avisos ativados", {body:"Este aparelho vai receber os avisos de parcelas a vencer.", icon:"/icon-192.png", tag:"parcelas-ativado"});
 toast("Avisos de parcelas ativados neste aparelho.");
-}catch(e){ toast("Não foi possível ativar os avisos agora. Tente de novo."); }
+}catch(e){ avisoErroPush(e); }
 finally{ pushState.ocupado = false; render(); }
+}
+/* explica o motivo real da falha, para saber o que fazer */
+function avisoErroPush(e){
+const nome = (e && e.name) || "", msg = String((e && (e.message || e.details || e.code)) || e || "");
+let txt;
+if(/brave/i.test(navigator.userAgent) || (navigator.brave && true)) txt = "No Brave, as notificações vêm desligadas: vá em Configurações → Privacidade e segurança e ative “Usar os serviços do Google para mensagens push”. Depois recarregue e tente de novo.";
+else if(nome === "AbortError" || /push service|registration failed/i.test(msg)) txt = "O serviço de notificações deste navegador não respondeu. Use o Chrome ou o Edge atualizados, ou confira se as notificações do sistema estão ligadas.";
+else if(nome === "NotAllowedError") txt = "As notificações estão bloqueadas para este site. Libere nas configurações do site (cadeado ao lado do endereço) e tente de novo.";
+else if(nome === "InvalidStateError" || nome === "SecurityError") txt = "Este navegador não permite notificações nesta janela (por exemplo, aba anônima). Abra numa janela normal e tente de novo.";
+else txt = "Não foi possível ativar os avisos agora.";
+pushState.erro = txt + " (detalhe: " + (nome ? nome + ": " : "") + msg.slice(0,140) + ")";
+toast(txt);
 }
 async function desativarPush(){
 pushState.ocupado = true; render();
@@ -50,6 +62,7 @@ txt = ehIOS() && !ehApp() ? "No iPhone, adicione o gerenciador à Tela de Iníci
 } else if(!pushState.checado){ txt = "Verificando avisos deste aparelho…"; }
 else if(Notification.permission === "denied"){ txt = "As notificações deste site estão bloqueadas no navegador. Libere nas configurações do site para receber os avisos."; }
 else if(pushState.ativo){ txt = "🔔 Avisos ativos neste aparelho (todo dia às 7h)."; btn = `<button class="btn btn-ghost" style="padding:3px 10px" data-act="push-off" ${pushState.ocupado?"disabled":""}>Desativar</button>`; }
+else if(pushState.erro){ txt = esc(pushState.erro); btn = `<button class="btn btn-primary" style="padding:5px 12px" data-act="push-on" ${pushState.ocupado?"disabled":""}>Tentar de novo</button>`; }
 else { txt = "Receba no celular ou no computador o aviso das parcelas, todo dia às 7h."; btn = `<button class="btn btn-primary" style="padding:5px 12px" data-act="push-on" ${pushState.ocupado?"disabled":""}>Ativar avisos</button>`; }
 return `<div class="push-box"><span>${txt}</span>${btn}</div>`;
 }
