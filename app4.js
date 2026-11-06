@@ -51,6 +51,30 @@ const c = S.data.comandas.get(ui.sel);
 h = `<h2>Cancelar comanda?</h2><p style="margin:8px 0 0">A comanda <b>${esc(c?c.nome:"")}</b> será encerrada sem pagamento e os itens voltam para o estoque. Ela continua no histórico como cancelada.</p>
 <div class="foot" style="margin-top:18px"><button class="btn btn-ghost" data-act="modal-close">Voltar</button><button class="btn btn-dark" data-act="confirm-cancel">Cancelar comanda</button></div>`;
 }
+else if(m.type === "promo"){
+const pr = m.id ? S.data.promocoes.get(m.id) : null;
+const sel = new Set(pr ? pr.produtos||[] : []);
+const vendaveis = produtos().filter(p => p.venda !== false).sort((a,b) => (a.categoria||"").localeCompare(b.categoria||"","pt-BR") || a.nome.localeCompare(b.nome,"pt-BR"));
+const grupos = {}; vendaveis.forEach(p => (grupos[p.categoria||"Outros"] ||= []).push(p));
+h = `<h2>${pr?"Editar promoção":"Nova promoção"}</h2><p class="muted" style="margin:0">Os produtos marcados podem ser misturados. Ex.: 1 Brahma + 2 Skol contam como 3.</p>
+<form id="f-promo" autocomplete="off">
+<label class="field"><span>Nome</span><input type="text" id="pr-nome" name="nome" required maxlength="40" value="${esc(pr?pr.nome:"")}" placeholder="Ex.: Litrinhos"></label>
+<div class="three">
+<label class="field"><span>Leve (unidades)</span><input type="number" id="pr-qtd" name="qtd" min="2" max="50" step="1" required value="${pr?pr.qtd:3}"></label>
+<label class="field"><span>Por (R$)</span><input type="text" id="pr-preco" name="preco" inputmode="decimal" required value="${pr?moneyIn(pr.preco):""}" placeholder="12,00"></label>
+<label class="field full"><span>Válida até (opcional)</span><input type="date" id="pr-ate" name="ate" value="${esc(pr&&pr.ate||"")}"></label>
+</div>
+<div class="field"><span>Produtos da promoção</span><input type="search" id="pr-busca" placeholder="Filtrar produtos" autocomplete="off">
+<div class="promo-pick" id="pr-lista">${Object.keys(grupos).sort((a,b)=>a.localeCompare(b,"pt-BR")).map(g => `<div class="label" style="margin-top:6px">${esc(g)}</div>${grupos[g].map(p => `<label class="check promo-opt" data-nome="${esc(p.nome.toLowerCase())}"><input type="checkbox" name="pp" value="${p.id}" ${sel.has(p.id)?"checked":""}> <span style="flex:1">${esc(p.nome)}</span><span class="num muted">${brl(p.preco)}</span></label>`).join("")}`).join("")}</div></div>
+<label class="check"><input type="checkbox" id="pr-ativa" name="ativa" ${!pr || pr.ativa ? "checked" : ""}> Promoção ativa</label>
+<div class="foot">${pr?`<button type="button" class="btn btn-ghost btn-danger" data-act="promo-del" data-v="${m.id}" style="margin-right:auto">Excluir</button>`:""}<button type="button" class="btn btn-ghost" data-act="modal-close">Voltar</button><button type="submit" class="btn btn-primary">${pr?"Salvar":"Criar promoção"}</button></div>
+</form>`;
+}
+else if(m.type === "promo-del"){
+const pr = S.data.promocoes.get(m.id);
+h = `<h2>Excluir promoção?</h2><p style="margin:8px 0 0"><b>${esc(pr?pr.nome:"")}</b> deixa de valer nas comandas abertas. As comandas já fechadas continuam com o desconto que tiveram.</p>
+<div class="foot" style="margin-top:18px"><button class="btn btn-ghost" data-act="modal-close">Voltar</button><button class="btn btn-dark" data-act="confirm-promo-del" data-v="${m.id}">Excluir promoção</button></div>`;
+}
 else if(m.type === "prod"){
 const p = m.id ? S.data.produtos.get(m.id) : null;
 const ctl = p ? (p.estoque !== null && p.estoque !== undefined) : true;
@@ -90,7 +114,7 @@ h = `<h2>${esc(c.nome)}</h2><p class="muted" style="margin:0">${c.status==="canc
 </div>
 <div style="display:flex;flex-direction:column;gap:4px;margin-top:12px">
 ${(c.itens||[]).map(i=>`<div class="sumline"><span>${i.qtd}× ${esc(i.nome)}</span><span>${brl(i.qtd*i.preco)}</span></div>`).join("")||'<span class="muted">Sem itens</span>'}
-${c.status==="fechada" ? `${c.desconto?`<div class="sumline"><span>Desconto</span><span>− ${brl(c.desconto)}</span></div>`:""}
+${c.status==="fechada" ? `${(c.promocoes||[]).map(r=>`<div class="sumline"><span>Promoção ${esc(r.nome)} (${r.combos}× ${esc(promoTexto(r))})</span><span>− ${brl(r.desconto)}</span></div>`).join("")}${c.desconto?`<div class="sumline"><span>Desconto</span><span>− ${brl(c.desconto)}</span></div>`:""}
 <div class="sumline tot"><span>Total</span><span>${brl(c.total)}</span></div>
 ${(c.pagamentos||[]).map(p=>`<div class="sumline"><span>${FORMAS[p.forma]}${p.forma==="cartao"?" ("+(p.tipo==="credito"?"crédito":"débito")+")":""}</span><span>${brl(p.valor)}</span></div>`).join("")}
 ${taxaComanda(c)?`<div class="sumline muted"><span>Taxa da maquininha</span><span>− ${brl(taxaComanda(c))}</span></div><div class="sumline"><span>Líquido recebido</span><span>${brl(c.total-taxaComanda(c))}</span></div>`:""}

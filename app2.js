@@ -62,7 +62,7 @@ const shown = q ? list.filter(c => c.nome.toLowerCase().includes(q)) : list;
 const now = Date.now();
 const slips = shown.length ? shown.map(c => `
 <button class="slip" data-act="sel" data-v="${c.id}" aria-current="${ui.sel===c.id}">
-<span class="s-name">${esc(c.nome)}</span><span class="s-total">${brl(subtotal(c))}</span>
+<span class="s-name">${esc(c.nome)}</span><span class="s-total">${brl(totalAberta(c))}</span>
 <span class="s-meta">${fmtDate(c.aberturaTs)} · ${fmtTime(c.aberturaTs)} · <span class="age" data-since="${c.aberturaTs}">${dur(now-c.aberturaTs)}</span> · ${qtdItens(c)} ${qtdItens(c)===1?"item":"itens"}</span>
 </button>`).join("") : `<div class="empty">${list.length ? "Nenhuma comanda com esse nome." : "Nenhuma comanda aberta.<br>Toque em <b>Abrir comanda</b> para começar."}</div>`;
 const listHtml = `<section class="cmd-list">
@@ -93,7 +93,10 @@ ${sel.obs ? `<div class="t-obs">${esc(sel.obs)}</div>` : ""}
 <button class="icon-btn" data-act="edit-cmd" aria-label="Editar comanda" title="Editar nome, observação e horário">✎</button>
 </div>
 <hr class="rule">${items}<hr class="rule">
-<div class="t-total"><span class="label">Total</span><span class="big">${brl(subtotal(sel))}</span></div>
+${(() => { const pr = calcPromos(sel); if(!pr.length) return "";
+return `<div class="promo-box">${pr.map(r => `<div class="promo-line"><span><span class="promo-tag">${esc(promoTexto(r))}</span> ${esc(r.nome)}${r.combos?` · ${r.combos}×`:""}</span><span class="num">${r.desconto?"− "+brl(r.desconto):""}</span></div>${r.faltam?`<div class="promo-hint">Mais ${r.faltam} ${r.faltam===1?"unidade":"unidades"} para fechar ${r.combos?"outra":"a"} promoção</div>`:""}`).join("")}
+${descPromo(sel)?`<div class="promo-line muted"><span>Subtotal sem promoção</span><span class="num">${brl(subtotal(sel))}</span></div>`:""}</div>`; })()}
+<div class="t-total"><span class="label">Total</span><span class="big">${brl(totalAberta(sel))}</span></div>
 <div class="t-actions">
 <button class="btn btn-primary btn-lg" data-act="close-cmd" ${sel.itens.length?"":"disabled"}>Fechar comanda</button>
 <button class="btn btn-ghost btn-danger" data-act="cancel-cmd">Cancelar</button>
@@ -111,6 +114,7 @@ const ctl = p.estoque !== null && p.estoque !== undefined;
 const out = ctl && p.estoque <= 0;
 return `<button class="ptile" data-act="add" data-v="${p.id}" ${out?"disabled":""}>
 <span class="p-n">${esc(p.nome)}</span>
+${(() => { const pr = promoDoProduto(p.id); return pr ? `<span class="promo-tag">${esc(promoTexto(pr))}</span>` : ""; })()}
 <span class="p-row"><span class="p-price">${brl(p.preco)}</span>${ctl?`<span class="stock ${stockClass(p.estoque)}">${out?"esgotado":p.estoque+" un"}</span>`:""}</span>
 </button>`;}).join("") : `<div class="empty" style="grid-column:1/-1">Nenhum produto encontrado. Cadastre na aba Produtos.</div>`;
 return `<div class="picker">
@@ -120,6 +124,17 @@ return `<div class="picker">
 <div class="pgrid">${tiles}</div></div>`;
 }
 /* ----- aba produtos ----- */
+function viewPromocoes(){
+const ps = promocoes().sort((a,b) => (promoAtiva(b)-promoAtiva(a)) || (b.criadoTs||0)-(a.criadoTs||0));
+const nomeProd = id => { const p = S.data.produtos.get(id); return p ? p.nome : "produto excluído"; };
+const status = pr => { if(promoAtiva(pr)) return ['ativa', pr.ate ? "Ativa até "+fmtDate(new Date(pr.ate+"T12:00").getTime()) : "Ativa"]; if(pr.ativa && pr.ate) return ['encerrada',"Encerrada"]; return ['pausada',"Pausada"]; };
+return `<section class="promo-sec"><div class="panel-head"><h2>Promoções</h2><button class="btn btn-primary" data-act="promo-new">+ Nova promoção</button></div>
+${ps.length ? `<div class="promo-grid">${ps.map(pr => { const st = status(pr);
+return `<div class="card promo-card ${st[0]}"><div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start"><div><div class="promo-big">${esc(promoTexto(pr))}</div><div style="font-weight:600">${esc(pr.nome)}</div></div><span class="pill ${st[0]==="ativa"?"paga":st[0]==="encerrada"?"cancelada":"pendente"}">${st[1]}</span></div>
+<div class="muted" style="font-size:13px">${(pr.produtos||[]).map(id=>esc(nomeProd(id))).join(" · ")}</div>
+<div class="acts" style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn" style="padding:5px 12px" data-act="promo-toggle" data-v="${pr.id}">${promoAtiva(pr)?"Pausar":"Ativar"}</button><button class="btn btn-ghost" style="padding:5px 12px" data-act="promo-edit" data-v="${pr.id}">Editar</button></div></div>`; }).join("")}</div>`
+: `<div class="empty">Nenhuma promoção. Ex.: <b>3 por R$ 12,00</b> nos litrinhos — o desconto entra sozinho na comanda.</div>`}</section>`;
+}
 function viewProdutos(){
 const q = ui.prodQ.trim().toLowerCase();
 let ps = produtos().filter(p => !q || p.nome.toLowerCase().includes(q) || (p.categoria||"").toLowerCase().includes(q));
@@ -133,13 +148,13 @@ const blocks = Object.keys(groups).sort((a,b)=>a.localeCompare(b,"pt-BR")).map(c
 ${groups[cat].sort((a,b)=>a.nome.localeCompare(b.nome,"pt-BR")).map(p => {
 const ctl = p.estoque !== null && p.estoque !== undefined;
 return `<div class="prow">
-<div class="pn">${esc(p.nome)}${p.venda===false?'<span class="tag" title="Não aparece no cardápio das comandas">Insumo</span>':""}${p.custo?`<div class="muted num" style="font-size:12px;font-weight:400">custo ${brl(p.custo)}</div>`:""}</div>
+<div class="pn">${esc(p.nome)}${promoDoProduto(p.id)?`<span class="promo-tag" style="margin-left:6px">${esc(promoTexto(promoDoProduto(p.id)))}</span>`:""}${p.venda===false?'<span class="tag" title="Não aparece no cardápio das comandas">Insumo</span>':""}${p.custo?`<div class="muted num" style="font-size:12px;font-weight:400">custo ${brl(p.custo)}</div>`:""}</div>
 <div class="pp">${p.venda===false?'<span class="muted">—</span>':brl(p.preco)}</div>
 <div class="stock-ctl">${ctl ? `<button class="icon-btn" data-act="stk" data-v="${p.id}" data-d="-1" aria-label="Tirar 1 do estoque">−</button><span class="sv ${stockClass(p.estoque)}" title="Em estoque">${p.estoque}</span><button class="icon-btn" data-act="stk" data-v="${p.id}" data-d="1" aria-label="Somar 1 ao estoque">+</button><button class="btn btn-ghost" style="padding:5px 8px;font-size:13px" data-act="stk-set" data-v="${p.id}">Repor</button>` : `<span class="muted" style="font-size:13px">Sem controle de estoque</span>`}</div>
 <div class="row-actions"><button class="btn btn-ghost" data-act="prod-edit" data-v="${p.id}">Editar</button></div>
 </div>`;}).join("")}
 </div></div>`).join("");
-return `<div class="panel-head"><h2>Produtos e estoque</h2><button class="btn btn-primary" data-act="prod-new">+ Novo produto</button></div>
+return `${viewPromocoes()}<div class="panel-head"><h2>Produtos e estoque</h2><button class="btn btn-primary" data-act="prod-new">+ Novo produto</button></div>
 <div class="toolbar">
 <input class="grow" type="search" id="prodQ" placeholder="Buscar por nome ou categoria" value="${esc(ui.prodQ)}" style="flex:1 1 220px;width:auto">
 <div class="periods">

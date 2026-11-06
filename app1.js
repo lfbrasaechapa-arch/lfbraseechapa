@@ -32,7 +32,7 @@ const SEED = [
 ["p-long-neck","Cerveja long neck","Bebidas",10,4],["p-suco","Suco natural","Bebidas",9,null]
 ];
 /* ---------- armazenamento ---------- */
-const COLS = ["produtos","comandas","despesas","compras","fornecedores","config"];
+const COLS = ["produtos","comandas","despesas","compras","fornecedores","config","promocoes"];
 const S = { data:{}, mode:"loading", db:null, seen:new Set(), slow:false, readOnly:false };
 COLS.forEach(c => S.data[c] = new Map());
 const LS_KEY = "comandas-churrasquinho-v1";
@@ -126,6 +126,28 @@ const produtos = () => [...S.data.produtos.entries()].map(([id,p]) => ({id,...p}
 const comandas = () => [...S.data.comandas.entries()].map(([id,c]) => ({id,...c}));
 const abertas = () => comandas().filter(c => c.status === "aberta").sort((a,b) => a.aberturaTs - b.aberturaTs);
 const subtotal = c => round2((c.itens||[]).reduce((s,i) => s + i.preco*i.qtd, 0));
+/* ---------- promoções ("leve N por R$ X", misturando os produtos do grupo) ---------- */
+const promocoes = () => [...S.data.promocoes.entries()].map(([id,p]) => ({id,...p}));
+function promoAtiva(pr){ if(!pr.ativa) return false; if(pr.ate && Date.now() > new Date(pr.ate+"T23:59:59").getTime()) return false; return true; }
+const promoTexto = pr => pr.qtd+" por "+brl(pr.preco);
+function promoDoProduto(pid){ return promocoes().find(pr => promoAtiva(pr) && (pr.produtos||[]).includes(pid)) || null; }
+/* calcula as promoções de uma comanda: forma combos com as unidades mais caras primeiro (melhor para o cliente) */
+function calcPromos(c){
+const out = [];
+promocoes().filter(pr => promoAtiva(pr) && pr.qtd >= 2 && pr.preco > 0).forEach(pr => {
+const set = new Set(pr.produtos||[]); const units = [];
+(c.itens||[]).forEach(i => { if(set.has(i.pid)) for(let k=0;k<i.qtd;k++) units.push(i.preco); });
+if(!units.length) return;
+units.sort((a,b) => b-a);
+const combos = Math.floor(units.length / pr.qtd); let desc = 0;
+for(let k=0;k<combos;k++){ const soma = units.slice(k*pr.qtd,(k+1)*pr.qtd).reduce((a,b)=>a+b,0); desc += Math.max(0, soma - pr.preco); }
+const sobra = units.length % pr.qtd;
+out.push({id:pr.id, nome:pr.nome, qtd:pr.qtd, preco:pr.preco, combos, unidades:units.length, faltam: sobra ? pr.qtd - sobra : 0, desconto: round2(desc)});
+});
+return out;
+}
+const descPromo = c => c.status === "aberta" ? round2(calcPromos(c).reduce((s,r)=>s+r.desconto,0)) : (c.descontoPromo||0);
+const totalAberta = c => round2(subtotal(c) - descPromo(c));
 const qtdItens = c => (c.itens||[]).reduce((s,i) => s + i.qtd, 0);
 const categorias = () => { const s = new Set(produtos().map(p => p.categoria||"Outros")); return [...s].sort((a,b)=>a.localeCompare(b,"pt-BR")); };
 const compras = () => [...S.data.compras.entries()].map(([id,c]) => ({id,...c}));

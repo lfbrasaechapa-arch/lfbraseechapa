@@ -152,6 +152,7 @@ const fat = round2(fech.reduce((s,c)=>s+(c.total||0),0));
 const taxaCartao = round2(fech.reduce((s,c)=>s+taxaComanda(c),0));
 const liquido = round2(fat - taxaCartao);
 const descontos = round2(fech.reduce((s,c)=>s+(c.desconto||0),0));
+const descontosPromo = round2(fech.reduce((s,c)=>s+(c.descontoPromo||0),0));
 let saidasCompras = 0; const movCompras = [];
 compras().forEach(c => {
 const quem = c.fornecedor || "compra sem fornecedor";
@@ -164,7 +165,7 @@ const saidas = round2(saidasCompras + saidasOutras);
 const pend = parcelasAbertas();
 const aPagar = round2(pend.reduce((s,p)=>s+p.valor,0));
 const ticket = fech.length ? fat/fech.length : 0;
-const abertasNow = abertas(); const emAberto = round2(abertasNow.reduce((s,c)=>s+subtotal(c),0));
+const abertasNow = abertas(); const emAberto = round2(abertasNow.reduce((s,c)=>s+totalAberta(c),0));
 const porForma = {pix:0,dinheiro:0,cartao:0}, cart = {debito:0,credito:0};
 const valorForma = (c, f) => round2((c.pagamentos||[]).filter(p=>p.forma===f).reduce((s,p)=>s+p.valor,0));
 fech.forEach(c => (c.pagamentos||[]).forEach(p => { porForma[p.forma] = (porForma[p.forma]||0) + p.valor; if(p.forma==="cartao") cart[p.tipo||"debito"] += p.valor; }));
@@ -238,7 +239,8 @@ return `<div class="panel-head"><h2>Financeiro · ${label}</h2>
 <div class="kpi"><div class="label">Contas a pagar</div><div class="v" style="color:${pend.some(p=>diasPara(p.vencimentoTs)<0)?"var(--bad)":"var(--ink)"}">${brl(aPagar)}</div><div class="muted" style="font-size:12.5px">${pend.length} ${pend.length===1?"parcela em aberto":"parcelas em aberto"}</div></div>
 </div>
 <div class="fin-grid">
-<div class="card"><h3>Por forma de pagamento</h3><div class="bars">${bars}</div>${descontos?`<p class="muted" style="font-size:13px;margin:12px 0 0">Descontos concedidos: ${brl(descontos)}</p>`:""}</div>
+<div class="card"><h3>Por forma de pagamento</h3><div class="bars">${bars}</div>${descontos?`<p class="muted" style="font-size:13px;margin:12px 0 0">Descontos concedidos: ${brl(descontos)}</p>`:""}
+${descontosPromo?`<p class="muted" style="font-size:13px;margin:6px 0 0">Descontos de promoções: ${brl(descontosPromo)}</p>`:""}</div>
 <div class="card"><h3>Vendas no período</h3>${chart}</div>
 <div class="card"><h3>Mais vendidos</h3>${rank}</div>
 <div class="card"><h3>Saídas</h3><p class="muted" style="margin:-6px 0 10px;font-size:13px">Compras pagas entram aqui sozinhas. Use o campo abaixo para gastos sem compra registrada, como gás ou aluguel.</p>${despHtml}</div>

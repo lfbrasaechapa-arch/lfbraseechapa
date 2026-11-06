@@ -3,14 +3,15 @@ function tipoChips(i, pt){ return `<div class="seg"><button type="button" class=
 /* valores de cada parte: numa forma só, a parte recebe o total */
 function payNumbers(){
 const c = S.data.comandas.get(ui.sel); const p = ui.pay;
-const sub = subtotal(c);
-let desc = parseMoney(p.desconto); if(!isFinite(desc) || desc<0) desc = 0; desc = Math.min(desc, sub);
-const total = round2(sub - desc);
+const sub = subtotal(c); const promos = calcPromos(c).filter(r => r.desconto > 0); const promo = round2(promos.reduce((s,r)=>s+r.desconto,0));
+const base = round2(sub - promo);
+let desc = parseMoney(p.desconto); if(!isFinite(desc) || desc<0) desc = 0; desc = Math.min(desc, base);
+const total = round2(base - desc);
 const partes = p.partes.map(pt => { let v = p.split ? parseMoney(pt.valor) : total; if(!isFinite(v) || v < 0) v = 0; return {...pt, v: round2(v)}; });
 const soma = round2(partes.reduce((s,pt)=>s+pt.v,0));
 const dinheiro = round2(partes.filter(pt=>pt.forma==="dinheiro").reduce((s,pt)=>s+pt.v,0));
 const rec = parseMoney(p.recebido);
-return {sub, desc, total, partes, soma, falta: round2(total - soma), dinheiro, rec};
+return {sub, promo, promos, desc, total, partes, soma, falta: round2(total - soma), dinheiro, rec};
 }
 function updatePayCalc(){
 const box = $("#c-calc"); if(!box) return;
@@ -30,7 +31,7 @@ let taxaTot = 0;
 const cardLines = card.map(pt => { const tp = taxas()[pt.tipo==="credito"?"credito":"debito"], tx = round2(pt.v*tp/100); taxaTot += tx;
 return `<div class="sumline muted"><span>Taxa ${pt.tipo==="credito"?"crédito":"débito"} (${pct(tp)}) sobre ${brl(pt.v)}</span><span>− ${brl(tx)}</span></div>`; }).join("");
 box.innerHTML = `<div style="display:flex;flex-direction:column;gap:6px">
-${n.desc?`<div class="sumline"><span>Subtotal</span><span>${brl(n.sub)}</span></div><div class="sumline"><span>Desconto</span><span>− ${brl(n.desc)}</span></div>`:""}
+${(n.desc||n.promo)?`<div class="sumline"><span>Subtotal</span><span>${brl(n.sub)}</span></div>`:""}${n.promos.map(r=>`<div class="sumline"><span>Promoção ${esc(r.nome)} (${r.combos}× ${esc(promoTexto(r))})</span><span>− ${brl(r.desconto)}</span></div>`).join("")}${n.desc?`<div class="sumline"><span>Desconto</span><span>− ${brl(n.desc)}</span></div>`:""}
 <div class="sumline tot"><span>Total a pagar</span><span>${brl(n.total)}</span></div>
 ${p.split ? n.partes.map(pt=>`<div class="sumline"><span><span class="dot" style="background:${FORMA_COLOR[pt.forma]}"></span>${FORMAS[pt.forma]}${pt.forma==="cartao"?" ("+(pt.tipo==="credito"?"crédito":"débito")+")":""}</span><span>${brl(pt.v)}</span></div>`).join("") : ""}
 ${lines}
@@ -65,6 +66,16 @@ const c = S.data.comandas.get(ui.sel);
 if(c){ devolverEstoque(c); c.status = "cancelada"; c.fechamentoTs = Date.now(); c.total = 0; persist("comandas", ui.sel); toast("Comanda “"+c.nome+"” cancelada."); }
 ui.sel = null; closeModal(); render(); break; }
 case "modal-close": closeModal(); break;
+case "promo-new": if(guard()) openModal({type:"promo"}); break;
+case "promo-edit": if(guard()) openModal({type:"promo", id:v}); break;
+case "promo-del": openModal({type:"promo-del", id:v}); break;
+case "confirm-promo-del": { if(!guard()) break; const pr = S.data.promocoes.get(v); del("promocoes", v); closeModal(); toast("Promoção "+(pr?pr.nome:"")+" excluída."); render(); break; }
+case "promo-toggle": { if(!guard()) break; const pr = S.data.promocoes.get(v); if(!pr) break;
+const ligar = !promoAtiva(pr);
+if(ligar){ const conflito = promocoes().find(o => o.id!==v && promoAtiva(o) && (o.produtos||[]).some(id => (pr.produtos||[]).includes(id))); if(conflito){ toast("Algum produto já está na promoção ativa "+conflito.nome+". Pause ela antes."); break; }
+pr.ativa = true; if(pr.ate && Date.now() > new Date(pr.ate+"T23:59:59").getTime()) delete pr.ate; }
+else pr.ativa = false;
+persist("promocoes", v); toast(ligar ? "Promoção "+pr.nome+" ativada." : "Promoção "+pr.nome+" pausada."); render(); break; }
 case "prod-new": if(guard()) openModal({type:"prod"}); break;
 case "prod-edit": if(guard()) openModal({type:"prod", id:v}); break;
 case "prod-del": openModal({type:"prod-del", id:v}); break;
@@ -77,7 +88,7 @@ case "hist": openModal({type:"hist", id:v}); break;
 case "reopen": {
 if(!guard()) break;
 const c = S.data.comandas.get(v); if(!c) break;
-c.status = "aberta"; delete c.fechamentoTs; delete c.pagamentos; delete c.total; delete c.desconto; delete c.recebido; delete c.troco;
+c.status = "aberta"; delete c.fechamentoTs; delete c.pagamentos; delete c.total; delete c.desconto; delete c.recebido; delete c.troco; delete c.descontoPromo; delete c.promocoes;
 persist("comandas", v); closeModal(); ui.tab = "comandas"; ui.sel = v; toast("Comanda “"+c.nome+"” reaberta."); render(); break; }
 case "desp-del": if(guard()){ del("despesas", v); render(); } break;
 case "mode": { const claro = document.documentElement.dataset.modo !== "claro"; if(claro) document.documentElement.dataset.modo = "claro"; else delete document.documentElement.dataset.modo; try{ localStorage.setItem("lf-modo", claro?"claro":"escuro"); }catch(err){} renderModeBtn(); break; }
@@ -123,6 +134,7 @@ else if(id === "listQ"){ ui.listQ = e.target.value; render(); }
 else if(id === "prodQ"){ ui.prodQ = e.target.value; render(); }
 else if(id === "c-desc"){ ui.pay.desconto = e.target.value; updatePayCalc(); }
 else if(id === "c-rec"){ ui.pay.recebido = e.target.value; updatePayCalc(); }
+else if(id === "pr-busca"){ const q = e.target.value.trim().toLowerCase(); document.querySelectorAll(".promo-opt").forEach(el => el.hidden = !!q && !el.dataset.nome.includes(q)); }
 else if(id.startsWith("c-parte-")){ const pt = ui.pay.partes[Number(id.slice(8))]; if(pt){ pt.valor = e.target.value; updatePayCalc(); } }
 else if(id === "b-forn"){ ui.compra.fornecedor = e.target.value; updateFornNote(); }
 else if(id === "fornQ"){ ui.fornQ = e.target.value; render(); }
@@ -176,13 +188,30 @@ if(!g){ g = {forma:pt.forma, valor:0}; if(tipo) g.tipo = tipo; pagamentos.push(g
 g.valor = round2(g.valor + pt.v);
 });
 pagamentos.forEach(g => { if(g.forma==="cartao"){ g.taxaPct = taxas()[g.tipo]; g.taxa = round2(g.valor*g.taxaPct/100); } });
-Object.assign(c, {status:"fechada", fechamentoTs:Date.now(), subtotal:n.sub, desconto:n.desc, total:n.total, pagamentos});
-delete c.recebido; delete c.troco;
+Object.assign(c, {status:"fechada", fechamentoTs:Date.now(), subtotal:n.sub, desconto:n.desc, descontoPromo:n.promo, promocoes:n.promos.map(r=>({id:r.id, nome:r.nome, qtd:r.qtd, preco:r.preco, combos:r.combos, desconto:r.desconto})), total:n.total, pagamentos});
+delete c.recebido; delete c.troco; if(!n.promo){ delete c.descontoPromo; delete c.promocoes; }
 if(n.dinheiro > 0 && isFinite(n.rec) && n.rec >= n.dinheiro){ c.recebido = n.rec; c.troco = round2(n.rec - n.dinheiro); }
 persist("comandas", ui.sel);
 const desc = pagamentos.map(g => brl(g.valor)+" no "+FORMAS[g.forma]).join(" + ");
 toast("“"+c.nome+"” fechada: "+desc+"."+(c.troco ? " Troco: "+brl(c.troco)+"." : ""));
 ui.sel = null; closeModal(); render();
+}
+else if(f.id === "f-promo"){
+const nome = String(fd.get("nome")).trim(), qtd = parseInt(fd.get("qtd"),10), preco = parseMoney(fd.get("preco")), ate = String(fd.get("ate")||""), ativa = !!fd.get("ativa");
+const prods = fd.getAll("pp");
+if(!nome) return;
+if(!(qtd >= 2)){ toast("A promoção precisa ser de pelo menos 2 unidades."); return; }
+if(!isFinite(preco) || preco <= 0){ toast("Informe o preço da promoção, por exemplo 12,00."); return; }
+if(!prods.length){ toast("Marque pelo menos um produto da promoção."); return; }
+const id = ui.modal.id || ("pr-"+uid());
+const novo = {...(S.data.promocoes.get(id)||{criadoTs:Date.now()}), nome, qtd, preco, produtos:prods, ativa};
+if(ate) novo.ate = ate; else delete novo.ate;
+if(promoAtiva(novo)){ const conflito = promocoes().find(o => o.id!==id && promoAtiva(o) && (o.produtos||[]).some(x => prods.includes(x))); if(conflito){ toast("Algum produto marcado já está na promoção ativa "+conflito.nome+"."); return; } }
+const precos = prods.map(x => (S.data.produtos.get(x)||{}).preco||0);
+if(qtd * Math.max(...precos) <= preco) toast("Atenção: "+qtd+" unidades já custam até "+brl(qtd*Math.max(...precos))+"; a promoção não dá desconto.");
+put("promocoes", id, novo);
+toast((ui.modal.id ? "Promoção atualizada: " : "Promoção criada: ")+nome+", "+promoTexto(novo)+".");
+closeModal(); render();
 }
 else if(f.id === "f-prod"){
 const nome = String(fd.get("nome")).trim(), categoria = String(fd.get("cat")||"").trim() || "Outros";
