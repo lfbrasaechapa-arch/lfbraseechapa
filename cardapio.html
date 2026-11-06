@@ -52,6 +52,14 @@ header.hero{padding-block:28px 8px;text-align:center;display:flex;flex-direction
 .link.wa .sub{color:rgba(28,14,4,.75)}
 .link .grow{flex:1;min-width:0}
 .link .arrow{opacity:.6;font-size:22px}
+.horario{margin-top:6px;padding:14px 18px;border-radius:14px;border:1px solid var(--line);background:var(--surface)}
+.horario h2{margin:0 0 8px;display:flex;align-items:center;gap:10px;font-family:var(--f-display);font-weight:700;font-size:19px;letter-spacing:.04em;text-transform:uppercase}
+.horario h2 svg{width:22px;height:22px;color:var(--gold)}
+.h-row{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-top:1px dotted var(--line);font-size:15px}
+.h-row b{font-variant-numeric:tabular-nums;white-space:nowrap}
+.h-row.fechado{color:var(--muted)}
+.h-row.hoje{color:var(--gold)}
+.h-row.hoje span::after{content:" · hoje";font-size:12.5px;font-weight:600}
 footer{color:var(--muted);font-size:13px;text-align:center;padding-block:14px 32px}
 
 /* ---------- tela do cardápio ---------- */
@@ -137,6 +145,12 @@ footer{color:var(--muted);font-size:13px;text-align:center;padding-block:14px 32
       <span class="arrow" aria-hidden="true">›</span>
     </a>
   </nav>
+  <section class="horario" aria-labelledby="t-horario">
+    <h2 id="t-horario"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Horário</h2>
+    <div class="h-row" data-dias="1,2,3,4,5,6"><span>Segunda a sábado</span><b>05:30 às 11:00</b></div>
+    <div class="h-row" data-dias="3,4,5"><span>Quarta a sexta</span><b>a partir das 17:00</b></div>
+    <div class="h-row fechado" data-dias="0"><span>Domingo</span><b>Fechado</b></div>
+  </section>
   </div>
 
   <section id="vMenu" aria-label="Cardápio" hidden>
@@ -233,6 +247,11 @@ function render(rows){
   }
 }
 
+/* destaca o horário de hoje (fuso de Divinópolis) */
+try{
+  var dia = new Date(new Date().toLocaleString("en-US",{timeZone:"America/Sao_Paulo"})).getDay();
+  document.querySelectorAll(".h-row").forEach(function(el){ if(el.dataset.dias.split(",").indexOf(String(dia)) >= 0) el.classList.add("hoje"); });
+}catch(e){}
 /* duas telas: links (início) e cardápio (#cardapio) */
 var veioDosLinks = false;
 function mostrar(){
