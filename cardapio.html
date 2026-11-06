@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0F0C0A">
+<title>L&amp;F Brasa e Chapa · Cardápio</title>
+<meta name="description" content="Cardápio da L&amp;F Brasa e Chapa: espetos, porções, lanches e bebidas. Fale com a gente pelo WhatsApp.">
+<meta property="og:title" content="L&amp;F Brasa e Chapa">
+<meta property="og:description" content="Espetos, porções, lanches e bebidas. Veja o cardápio e fale com a gente.">
+<meta property="og:image" content="/logo.webp">
+<link rel="icon" type="image/webp" href="logo.webp">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+:root{
+  --bg:#0F0C0A; --surface:#1A1512; --line:#3B2F26; --ink:#F6ECDF; --muted:#B3A291;
+  --accent:#F2861E; --accent-ink:#1C0E04; --gold:#E9B44C; --wa:#25D366;
+  --f-brand:"Cinzel",Georgia,serif;
+  --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{min-height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.45;
+  background-image:radial-gradient(ellipse 120% 60% at 50% -10%, rgba(242,134,30,.22), transparent 60%)}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.wrap{max-width:560px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+[hidden]{display:none!important}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+
+header.hero{padding-block:28px 8px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px}
+.hero img{width:220px;max-width:70%;height:auto;border-radius:14px;box-shadow:0 10px 40px rgba(242,134,30,.18)}
+.hero h1{margin:4px 0 0;font-family:var(--f-brand);font-size:26px;letter-spacing:.07em;text-transform:uppercase;line-height:1.1;
+  background:linear-gradient(180deg,#FFE08A 0%,#E9B44C 45%,#F2861E 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{margin:0;color:var(--muted);font-size:15px;letter-spacing:.04em}
+
+.links{display:flex;flex-direction:column;gap:12px;padding-block:18px 8px}
+.link{display:flex;align-items:center;gap:14px;padding:16px 18px;border-radius:14px;text-decoration:none;font-family:var(--f-display);font-weight:700;font-size:21px;letter-spacing:.04em;text-transform:uppercase;border:1px solid var(--line);background:var(--surface);transition:transform .12s ease,border-color .12s ease}
+.link:active{transform:scale(.98)}
+.link:hover{border-color:var(--accent)}
+.link svg{width:26px;height:26px;flex:none}
+.link .sub{display:block;font-family:var(--f-body);font-weight:500;font-size:13px;letter-spacing:0;text-transform:none;color:var(--muted)}
+.link.wa{background:linear-gradient(180deg,#F7A13A,var(--accent));color:var(--accent-ink);border-color:var(--accent)}
+.link.wa .sub{color:rgba(28,14,4,.75)}
+.link .grow{flex:1;min-width:0}
+.link .arrow{opacity:.6;font-size:22px}
+
+section.menu{padding-block:22px 40px}
+.menu h2{font-family:var(--f-display);font-size:30px;text-transform:uppercase;letter-spacing:.05em;margin:0 0 10px;text-align:center}
+.chips{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;display:flex;gap:6px;overflow-x:auto;padding-block:10px;background:var(--bg);scrollbar-width:none;margin:0 -4px;padding-left:4px;padding-right:4px}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:20px;padding:6px 14px;font:600 14px var(--f-body);cursor:pointer;text-decoration:none}
+.chip.on{background:var(--gold);color:var(--accent-ink);border-color:var(--gold)}
+.cat{scroll-margin-top:64px;margin-top:18px}
+.cat h3{font-family:var(--f-display);font-size:22px;text-transform:uppercase;letter-spacing:.06em;color:var(--gold);margin:0 0 4px;display:flex;align-items:center;gap:10px}
+.cat h3::after{content:"";flex:1;height:1px;background:var(--line)}
+.item{display:flex;align-items:baseline;gap:8px;padding:10px 0;border-bottom:1px dotted var(--line)}
+.item:last-child{border-bottom:0}
+.item .n{font-weight:600;min-width:0;overflow-wrap:anywhere}
+.item .dots{flex:1;border-bottom:1px dotted rgba(179,162,145,.35);transform:translateY(-4px);min-width:12px}
+.item .p{font-family:var(--f-mono);font-weight:600;white-space:nowrap}
+.item.off .n,.item.off .p{color:var(--muted);text-decoration:line-through}
+.tag{display:inline-block;font-family:var(--f-mono);font-size:11.5px;font-weight:600;padding:1px 7px;border-radius:20px;background:var(--accent);color:var(--accent-ink);white-space:nowrap;margin-left:6px;vertical-align:2px}
+.tag.out{background:transparent;color:var(--muted);border:1px solid var(--line);text-decoration:none}
+.promo-bar{margin:6px 0 2px;padding:10px 14px;border-radius:12px;border:1px solid var(--accent);background:rgba(242,134,30,.12);font-size:14.5px}
+.promo-bar b{color:var(--gold)}
+.state{color:var(--muted);text-align:center;padding:28px 0}
+footer{color:var(--muted);font-size:13px;text-align:center;padding-block:10px 32px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <img src="logo.webp" alt="L&amp;F Brasa e Chapa" width="320" height="229">
+    <h1>L&amp;F Brasa e Chapa</h1>
+    <p>Espetos · Porções · Lanches · Bebidas</p>
+  </header>
+
+  <nav class="links" aria-label="Links">
+    <a class="link wa" id="waLink" href="https://wa.me/5537998055152?text=Ol%C3%A1%2C%20L%26F%20Brasa%20e%20Chapa!%20Vim%20pelo%20Instagram." target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.4.1-.7.3-.2.3-.9.9-.9 2.2s.9 2.5 1 2.7c.1.2 1.8 2.8 4.4 3.9 1.6.7 2.3.8 3.1.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3z"/></svg>
+      <span class="grow">Fale com a gente<span class="sub">WhatsApp (37) 99805-5152</span></span>
+      <span class="arrow" aria-hidden="true">›</span>
+    </a>
+    <a class="link" href="#cardapio">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 21 20 5"/><rect x="6.5" y="12" width="5" height="5" rx="1.5" transform="rotate(-45 9 14.5)" fill="var(--accent)" stroke="none"/><rect x="11" y="7.5" width="5" height="5" rx="1.5" transform="rotate(-45 13.5 10)" fill="var(--gold)" stroke="none"/></svg>
+      <span class="grow">Cardápio<span class="sub">Preços atualizados</span></span>
+      <span class="arrow" aria-hidden="true">›</span>
+    </a>
+  </nav>
+
+  <section class="menu" id="cardapio" aria-labelledby="t-cardapio">
+    <h2 id="t-cardapio">Cardápio</h2>
+    <div id="promos"></div>
+    <div class="chips" id="chips" role="navigation" aria-label="Categorias"></div>
+    <div id="lista"><p class="state">Carregando o cardápio…</p></div>
+  </section>
+
+  <footer>L&amp;F Brasa e Chapa · Preços sujeitos a alteração</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+var SB_URL = "https://nvotxijhswdwnyyskvvc.supabase.co";
+var SB_KEY = "sb_publishable_FeYvAu_cQkTKKRKz9DCQEA_LTUKzcoC";
+var ORDEM = ["Espetos","Porções","Lanches","Bebidas","Doces","Outros"];
+function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+function brl(n){ return Number(n).toLocaleString("pt-BR",{style:"currency",currency:"BRL"}); }
+function slug(s){ return "c-" + s.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-"); }
+function limpa(nome){ return String(nome).replace(/\s+/g," ").trim(); }
+
+function render(rows){
+  var cats = {};
+  rows.forEach(function(r){ (cats[r.categoria] = cats[r.categoria] || []).push(r); });
+  var nomes = Object.keys(cats).sort(function(a,b){
+    var ia = ORDEM.indexOf(a), ib = ORDEM.indexOf(b);
+    return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || a.localeCompare(b,"pt-BR");
+  });
+  if(!nomes.length){ document.getElementById("lista").innerHTML = '<p class="state">Cardápio em atualização. Fale com a gente pelo WhatsApp.</p>'; return; }
+
+  /* promoções em destaque */
+  var promos = {};
+  rows.forEach(function(r){ if(r.promocao && !r.esgotado){ (promos[r.promocao] = promos[r.promocao] || []).push(limpa(r.nome)); } });
+  document.getElementById("promos").innerHTML = Object.keys(promos).map(function(p){
+    return '<div class="promo-bar">🔥 Promoção: <b>' + esc(p) + '</b> em ' + esc(promos[p].join(", ")) + ' (pode misturar)</div>';
+  }).join("");
+
+  document.getElementById("chips").innerHTML = nomes.map(function(c,i){
+    return '<a class="chip' + (i===0 ? ' on' : '') + '" href="#' + slug(c) + '">' + esc(c) + '</a>';
+  }).join("");
+
+  document.getElementById("lista").innerHTML = nomes.map(function(c){
+    return '<div class="cat" id="' + slug(c) + '"><h3>' + esc(c) + '</h3>' + cats[c].map(function(r){
+      return '<div class="item' + (r.esgotado ? ' off' : '') + '"><span class="n">' + esc(limpa(r.nome)) +
+        (r.esgotado ? '<span class="tag out">Esgotado</span>' : (r.promocao ? '<span class="tag">' + esc(r.promocao) + '</span>' : '')) +
+        '</span><span class="dots" aria-hidden="true"></span><span class="p">' + brl(r.preco) + '</span></div>';
+    }).join("") + '</div>';
+  }).join("");
+
+  /* destaca a categoria visível */
+  var chips = Array.prototype.slice.call(document.querySelectorAll("#chips .chip"));
+  if("IntersectionObserver" in window){
+    var io = new IntersectionObserver(function(ents){
+      ents.forEach(function(e){
+        if(e.isIntersecting){
+          chips.forEach(function(ch){ ch.classList.toggle("on", ch.getAttribute("href") === "#" + e.target.id); });
+          var on = document.querySelector("#chips .chip.on"); if(on && on.scrollIntoView) on.scrollIntoView({block:"nearest", inline:"center"});
+        }
+      });
+    }, {rootMargin:"-70px 0px -70% 0px"});
+    document.querySelectorAll(".cat").forEach(function(el){ io.observe(el); });
+  }
+}
+
+fetch(SB_URL + "/rest/v1/rpc/cardapio_publico", {
+  method:"POST",
+  headers:{"apikey":SB_KEY, "Authorization":"Bearer " + SB_KEY, "Content-Type":"application/json"},
+  body:"{}"
+}).then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
+  .then(render)
+  .catch(function(){
+    document.getElementById("lista").innerHTML = '<p class="state">Não foi possível carregar o cardápio agora. Recarregue a página ou fale com a gente pelo WhatsApp.</p>';
+  });
+})();
+</script>
+</body>
+</html>
