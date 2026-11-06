@@ -121,6 +121,7 @@ function del(col, id){ S.data[col].delete(id); persist(col, id); }
 /* ---------- estado da interface ---------- */
 const ui = { tab:"comandas", sel:null, q:"", cat:"Todas", listQ:"", prodQ:"", prodFilter:"todos", period:"hoje", modal:null, pay:null, compra:null, buyView:"compras", fornQ:"" };
 try { const t = localStorage.getItem(LS_KEY+"-tab"); if(t) ui.tab = t; } catch(e){}
+try { const a = new URLSearchParams(location.search).get("aba"); if(a){ ui.tab = a; history.replaceState(null, "", location.pathname); } } catch(e){}
 /* ---------- consultas ---------- */
 const produtos = () => [...S.data.produtos.entries()].map(([id,p]) => ({id,...p}));
 const comandas = () => [...S.data.comandas.entries()].map(([id,c]) => ({id,...c}));

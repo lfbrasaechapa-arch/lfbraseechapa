@@ -49,6 +49,7 @@ return `<div class="buy-item" style="cursor:default"><span class="bi-t">${esc(p.
 : `<p class="muted" style="margin:0;font-size:14px">Nenhuma parcela em aberto.</p>`;
 const tot = round2(ab.reduce((s,p)=>s+p.valor,0));
 return `<div class="card"><div class="panel-head" style="margin-bottom:6px"><h3 style="margin:0">Parcelas a pagar</h3><span class="num" style="font-weight:600">${brl(tot)}</span></div>
+${pushHtml()}
 <label class="check" style="font-weight:400;margin-bottom:8px;flex-wrap:wrap">Avisar com
 <select id="alert-dias" style="width:auto;padding:4px 8px">${[0,1,2,3,5,7].map(n=>`<option value="${n}" ${n===dias?"selected":""}>${n===0?"no dia":n+(n===1?" dia":" dias")}</option>`).join("")}</select> de antecedência</label>
 ${rows}</div>`;

@@ -2,5 +2,8 @@
   "cleanUrls": true,
   "redirects": [
     { "source": "/cardapio", "destination": "/link", "permanent": true }
+  ],
+  "crons": [
+    { "path": "/api/avisos-parcelas", "schedule": "0 10 * * *" }
   ]
 }

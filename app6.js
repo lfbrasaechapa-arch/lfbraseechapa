@@ -33,6 +33,7 @@ return;
 }
 document.body.classList.remove("locked"); $("#login").hidden = true;
 $("#logoutBtn").title = "Sair (" + (session.user.email||"") + ")";
+window.__email = session.user.email || null; checarPush();
 render(); connect();
 }
 document.getElementById("f-login").addEventListener("submit", async e => {

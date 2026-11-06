@@ -1,0 +1,7 @@
+{
+  "name": "lf-brasa-e-chapa",
+  "private": true,
+  "dependencies": {
+    "web-push": "3.6.7"
+  }
+}
