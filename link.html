@@ -65,9 +65,9 @@ footer{color:var(--muted);font-size:13px;text-align:center;padding-block:14px 32
 #vMenu{padding-block:8px 8px}
 .menu-top{display:flex;align-items:center;justify-content:space-between;padding-block:4px 10px}
 .back{text-decoration:none;font-weight:600;color:var(--gold);padding:8px 12px 8px 0;font-size:16px}
-.chips{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;display:flex;gap:6px;overflow-x:auto;padding-block:10px;background:var(--bg);scrollbar-width:none;margin:0 -4px;padding-left:4px;padding-right:4px}
+.chips{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:12px 10px;margin:0 -6px;border-radius:14px;background:rgba(15,12,10,.82);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid rgba(201,150,59,.25)}
 .chips::-webkit-scrollbar{display:none}
-.chip{flex:none;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:20px;padding:6px 14px;font:600 14px var(--f-body);text-decoration:none;white-space:nowrap}
+.chip{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:20px;padding:8px 6px;font:600 14.5px var(--f-body);text-decoration:none;white-space:nowrap;line-height:1.2;text-align:center;overflow:hidden;text-overflow:ellipsis}
 .chip.on{background:var(--gold);color:var(--accent-ink);border-color:var(--gold)}
 
 .panel{position:relative;border-radius:6px;padding:18px 16px 22px;margin-top:14px;overflow:hidden;border:2px solid var(--gold-2);
@@ -84,9 +84,9 @@ footer{color:var(--muted);font-size:13px;text-align:center;padding-block:14px 32
   radial-gradient(ellipse 90% 70% at 50% 40%, rgba(255,250,240,.55), transparent 75%),
   linear-gradient(180deg,var(--parch-1),var(--parch-2));color:var(--parch-ink)}
 .panel.light::before,.panel.light::after{background:var(--bg)}
-.logo-fogo{display:block;width:62%;max-width:280px;height:auto;margin:-4px auto 4px;-webkit-mask-image:radial-gradient(ellipse 70% 70% at 50% 50%,#000 60%,transparent 100%);mask-image:radial-gradient(ellipse 70% 70% at 50% 50%,#000 60%,transparent 100%)}
+.logo-fogo{display:block;width:70%;max-width:300px;height:auto;margin:2px auto 10px;filter:drop-shadow(0 6px 20px rgba(242,110,20,.25))}
 
-.sec{position:relative;scroll-margin-top:64px;padding-top:6px}
+.sec{position:relative;scroll-margin-top:118px;padding-top:6px}
 .sec + .sec{margin-top:22px}
 .sec-head{position:relative;display:flex;align-items:flex-end;min-height:118px;margin-bottom:6px}
 .foto{position:absolute;right:-16px;top:-6px;width:52%;max-width:240px;height:132px;object-fit:cover;
@@ -155,7 +155,7 @@ footer{color:var(--muted);font-size:13px;text-align:center;padding-block:14px 32
   <section id="vMenu" aria-label="Cardápio" hidden>
     <div class="menu-top"><a class="back" href="#" aria-label="Voltar para o início">‹ Voltar</a></div>
     <div class="chips" id="chips" role="navigation" aria-label="Categorias"></div>
-    <div id="paineis"><div class="panel dark"><img class="logo-fogo" src="img/logo-fogo.webp" alt="L&amp;F Brasa e Chapa" width="480" height="420"><p class="state">Carregando o cardápio…</p></div></div>
+    <div id="paineis"><div class="panel dark"><img class="logo-fogo" src="img/logo-transparente.webp" alt="L&amp;F Brasa e Chapa" width="520" height="367"><p class="state">Carregando o cardápio…</p></div></div>
   </section>
 
   <footer id="fPreco">Preços sujeitos a alteração</footer>
@@ -178,9 +178,9 @@ var ICON = {
 var SECOES = [
   {id:"espetos", painel:"dark",  titulo:"Espetos", chip:"Espetos", icon:"espeto", foto:"espeto"},
   {id:"porcoes", painel:"dark",  titulo:"Porções", chip:"Porções", icon:"batata", foto:"batata"},
-  {id:"cervejas",painel:"dark",  titulo:"Bebidas", chip:"Cervejas e drinks", icon:"chope", foto:"chope"},
+  {id:"cervejas",painel:"dark",  titulo:"Bebidas", chip:"Cervejas", icon:"chope", foto:"chope"},
   {id:"lanches", painel:"light", titulo:"Lanches", chip:"Lanches", icon:"lanche", foto:"sanduiche"},
-  {id:"bebidas", painel:"light", titulo:"Bebidas", chip:"Sucos e refrigerantes", icon:"xicara", foto:"cafe"},
+  {id:"bebidas", painel:"light", titulo:"Bebidas", chip:"Bebidas", icon:"xicara", foto:"cafe"},
   {id:"doces",   painel:"light", titulo:"Doces",   chip:"Doces", icon:"doce", foto:"pacoca"},
   {id:"outros",  painel:"light", titulo:"Outros",  chip:"Outros", icon:"lanche", foto:"coxinha"}
 ];
@@ -225,7 +225,7 @@ function render(rows){
       }).join("") + '</div></div>';
   }
   var dark = ativas.filter(function(s){ return s.painel === "dark"; }), light = ativas.filter(function(s){ return s.painel === "light"; });
-  var out = '<div class="panel dark"><img class="logo-fogo" src="img/logo-fogo.webp" alt="L&amp;F Brasa e Chapa" width="480" height="420">' + promoHtml + dark.map(secHtml).join("") +
+  var out = '<div class="panel dark"><img class="logo-fogo" src="img/logo-transparente.webp" alt="L&amp;F Brasa e Chapa" width="520" height="367">' + promoHtml + dark.map(secHtml).join("") +
     '</div>';
   if(light.length) out += '<div class="panel light">' + light.map(secHtml).join("") + '</div>';
   box.innerHTML = out;
@@ -241,7 +241,7 @@ function render(rows){
           var on = document.querySelector("#chips .chip.on"); if(on && on.scrollIntoView) on.scrollIntoView({block:"nearest", inline:"center"});
         }
       });
-    }, {rootMargin:"-70px 0px -70% 0px"});
+    }, {rootMargin:"-120px 0px -65% 0px"});
     document.querySelectorAll(".sec").forEach(function(el){ io.observe(el); });
   }
 }
